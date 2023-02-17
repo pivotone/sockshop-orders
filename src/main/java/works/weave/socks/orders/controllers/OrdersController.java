@@ -1,13 +1,17 @@
 package works.weave.socks.orders.controllers;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.Extension;
+import io.swagger.annotations.ExtensionProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.mvc.TypeReferences;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.core.TypeReferences;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +34,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@Api(tags = "orders api")
 @RepositoryRestController
+@RestController
 public class OrdersController {
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
@@ -46,8 +52,11 @@ public class OrdersController {
     @Value(value = "${http.timeout:5}")
     private long timeout;
 
+    @ApiOperation(value = "create a new order",
+            extensions = @Extension(properties = {@ExtensionProperty(name = "x-forward-compatible-marker", value = "1")})
+    )
     @ResponseStatus(HttpStatus.CREATED)
-    @RequestMapping(path = "/orders", consumes = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.POST)
+    @PostMapping(path = "/orders", consumes = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
     CustomerOrder newOrder(@RequestBody NewOrderResource item) {
@@ -59,14 +68,14 @@ public class OrdersController {
 
 
             LOG.debug("Starting calls");
-            Future<Resource<Address>> addressFuture = asyncGetService.getResource(item.address, new TypeReferences
-                    .ResourceType<Address>() {
+            Future<EntityModel<Address>> addressFuture = asyncGetService.getResource(item.address, new TypeReferences
+                    .EntityModelType<Address>() {
             });
-            Future<Resource<Customer>> customerFuture = asyncGetService.getResource(item.customer, new TypeReferences
-                    .ResourceType<Customer>() {
+            Future<EntityModel<Customer>> customerFuture = asyncGetService.getResource(item.customer, new TypeReferences
+                    .EntityModelType<Customer>() {
             });
-            Future<Resource<Card>> cardFuture = asyncGetService.getResource(item.card, new TypeReferences
-                    .ResourceType<Card>() {
+            Future<EntityModel<Card>> cardFuture = asyncGetService.getResource(item.card, new TypeReferences
+                    .EntityModelType<Card>() {
             });
             Future<List<Item>> itemsFuture = asyncGetService.getDataList(item.items, new
                     ParameterizedTypeReference<List<Item>>() {
@@ -97,7 +106,7 @@ public class OrdersController {
             }
 
             // Ship
-            String customerId = parseId(customerFuture.get(timeout, TimeUnit.SECONDS).getId().getHref());
+            String customerId = parseId(customerFuture.get(timeout, TimeUnit.SECONDS).getLinks().toString());
             Future<Shipment> shipmentFuture = asyncGetService.postResource(config.getShippingUri(), new Shipment
                     (customerId), new ParameterizedTypeReference<Shipment>() {
             });
@@ -160,14 +169,14 @@ public class OrdersController {
     }
 
     @ResponseStatus(value = HttpStatus.NOT_ACCEPTABLE)
-    public class PaymentDeclinedException extends IllegalStateException {
+    public static class PaymentDeclinedException extends IllegalStateException {
         public PaymentDeclinedException(String s) {
             super(s);
         }
     }
 
     @ResponseStatus(value = HttpStatus.NOT_ACCEPTABLE)
-    public class InvalidOrderException extends IllegalStateException {
+    public static class InvalidOrderException extends IllegalStateException {
         public InvalidOrderException(String s) {
             super(s);
         }
