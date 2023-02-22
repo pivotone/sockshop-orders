@@ -20,7 +20,6 @@ import works.weave.socks.orders.entities.*;
 import works.weave.socks.orders.repositories.CustomerOrderRepository;
 import works.weave.socks.orders.resources.NewOrderResource;
 import works.weave.socks.orders.services.AsyncGetService;
-import works.weave.socks.orders.utils.ResultUtil;
 import works.weave.socks.orders.values.PaymentRequest;
 import works.weave.socks.orders.values.PaymentResponse;
 
@@ -54,13 +53,13 @@ public class OrdersController {
     private long timeout;
 
     @ApiOperation(value = "create a new order",
-            extensions = @Extension(properties = {@ExtensionProperty(name = "x-forward-compatible-marker", value = "1")})
+            extensions = @Extension(properties = {@ExtensionProperty(name = "x-forward-compatible-marker", value = "0")})
     )
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(path = "/orders", consumes = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    Result newOrder(@RequestBody NewOrderResource item) {
+    CustomerOrder newOrder(@RequestBody NewOrderResource item) {
         try {
 
             if (item.address == null || item.customer == null || item.card == null || item.items == null) {
@@ -127,7 +126,7 @@ public class OrdersController {
             CustomerOrder savedOrder = customerOrderRepository.save(order);
             LOG.debug("Saved order: " + savedOrder);
 
-            return ResultUtil.success(savedOrder);
+            return savedOrder;
         } catch (TimeoutException e) {
             throw new IllegalStateException("Unable to create order due to timeout from one of the services.", e);
         } catch (InterruptedException | IOException | ExecutionException e) {
