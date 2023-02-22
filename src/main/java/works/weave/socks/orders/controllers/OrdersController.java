@@ -20,6 +20,7 @@ import works.weave.socks.orders.entities.*;
 import works.weave.socks.orders.repositories.CustomerOrderRepository;
 import works.weave.socks.orders.resources.NewOrderResource;
 import works.weave.socks.orders.services.AsyncGetService;
+import works.weave.socks.orders.utils.ResultUtil;
 import works.weave.socks.orders.values.PaymentRequest;
 import works.weave.socks.orders.values.PaymentResponse;
 
@@ -59,7 +60,7 @@ public class OrdersController {
     @PostMapping(path = "/orders", consumes = MediaType.APPLICATION_JSON_VALUE)
     public
     @ResponseBody
-    CustomerOrder newOrder(@RequestBody NewOrderResource item) {
+    Result newOrder(@RequestBody NewOrderResource item) {
         try {
 
             if (item.address == null || item.customer == null || item.card == null || item.items == null) {
@@ -126,7 +127,7 @@ public class OrdersController {
             CustomerOrder savedOrder = customerOrderRepository.save(order);
             LOG.debug("Saved order: " + savedOrder);
 
-            return savedOrder;
+            return ResultUtil.success(savedOrder);
         } catch (TimeoutException e) {
             throw new IllegalStateException("Unable to create order due to timeout from one of the services.", e);
         } catch (InterruptedException | IOException | ExecutionException e) {
