@@ -7,8 +7,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.Resource;
 import java.io.*;
 import java.util.Map;
 
@@ -18,7 +20,7 @@ public class NacosMetadataConfig {
     @Value("${version}")
     private String version;
 
-    @Autowired
+    @Resource
     private Environment environment;
 
     @Bean
@@ -28,7 +30,7 @@ public class NacosMetadataConfig {
         System.out.println(version);
         metadata.put("version", version);
 
-        updateYaml();
+//        updateYaml();
 
 //        String name = environment.getProperty("spring.application.name");
 //        System.out.println(name);
@@ -37,9 +39,10 @@ public class NacosMetadataConfig {
     }
 
     private void updateYaml() throws IOException {
-        String url = NacosDiscoveryProperties.class.getClassLoader().getResource("application.yml").getPath();
+//        ClassPathResource resource = new ClassPathResource("application.yml");
+//        InputStream inputStream = resource.getInputStream();
+        String url = NacosDiscoveryProperties.class.getClassLoader().getResource("./application.yml").getPath();
         Yaml yaml = new Yaml();
-        FileWriter writer;
         FileInputStream inputStream = new FileInputStream(new File(url));
         Map<String, Object> yamlMap = yaml.load(inputStream);
         String name = environment.getProperty("spring.application.name");
@@ -54,7 +57,7 @@ public class NacosMetadataConfig {
                 yamlMap.put("spring.cloud.nacos.discovery.service", name.replaceAll(regex, "v" + majorVersion));
         }
 //        yamlMap.put("spring.application.name", "service-v1");
-        writer = new FileWriter(new File(url));
+        FileWriter writer = new FileWriter(new File(url));
         writer.write(yaml.dumpAsMap(yamlMap));
         writer.flush();
         yamlMap.get("spring.cloud.nacos.discovery.service");

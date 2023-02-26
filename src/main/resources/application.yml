@@ -8,7 +8,7 @@
 ## Disable actuator metrics endpoints
 #endpoints.metrics.enabled=false
 server:
-  port: 8082
+  port: 15679
 spring:
   main:
     allow-circular-references: true
@@ -25,3 +25,4 @@ spring:
       discovery:
         namespace: public
         server-addr: 39.104.112.98:8848
+        service: ${spring.application.name}-v@major.version@
